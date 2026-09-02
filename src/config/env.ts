@@ -17,4 +17,8 @@ export const env = {
     password: required("DB_PASSWORD"),
     database: required("DB_NAME"),
   },
+  jwt: {
+    secret: required("JWT_SECRET"),
+    expiresIn: process.env.JWT_EXPIRES_IN ?? "1d",
+  },
 };
