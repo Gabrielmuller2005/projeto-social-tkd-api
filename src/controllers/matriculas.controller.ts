@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import {
   createMatricula,
   findMatriculaById,
+  findMatriculaByAlunoETurma,
   listMatriculasByAlunoId,
   listMatriculasAtivasByTurmaId,
   encerrarMatricula,
@@ -10,12 +11,18 @@ import { findAlunoById } from "../models/alunos.model.js";
 import { findTurmaById } from "../models/turmas.model.js";
 import { podeAcessarAluno } from "../utils/acesso.js";
 import { perfil_admin_professor } from "../types/auth.js";
+import { converterDataBrParaIso } from "../utils/validacao.js";
 
 export async function criarMatricula(req: Request, res: Response) {
   const { aluno_id, turma_id, data_inicio } = req.body ?? {};
 
   if (!aluno_id || !turma_id || !data_inicio) {
     res.status(400).json({ message: "Campos obrigatórios: aluno_id, turma_id, data_inicio" });
+    return;
+  }
+  const dataInicioIso = converterDataBrParaIso(data_inicio);
+  if (!dataInicioIso) {
+    res.status(400).json({ message: "data_inicio inválida. Use o formato DD/MM/AAAA" });
     return;
   }
 
@@ -34,11 +41,25 @@ export async function criarMatricula(req: Request, res: Response) {
     res.status(404).json({ message: "Turma não encontrada" });
     return;
   }
+  if (!turma.ativo) {
+    res.status(409).json({ message: "Turma inativa não pode receber novas matrículas" });
+    return;
+  }
+
+  const matriculaExistente = await findMatriculaByAlunoETurma(Number(aluno_id), Number(turma_id));
+  if (matriculaExistente) {
+    res.status(409).json({
+      message: matriculaExistente.ativa
+        ? "Aluno já está matriculado nesta turma"
+        : "Aluno já teve uma matrícula nesta turma (encerrada) — o banco não permite uma segunda matrícula para o mesmo par aluno/turma",
+    });
+    return;
+  }
 
   const id = await createMatricula({
     aluno_id: Number(aluno_id),
     turma_id: Number(turma_id),
-    data_inicio,
+    data_inicio: dataInicioIso,
   });
 
   const matricula = await findMatriculaById(id);

@@ -6,6 +6,7 @@ import {
   cancelarAula,
 } from "../models/aulas.model.js";
 import { findTurmaById } from "../models/turmas.model.js";
+import { converterDataBrParaIso, isHoraValida } from "../utils/validacao.js";
 
 export async function criarAula(req: Request, res: Response) {
   const { turma_id, data_aula, hora_inicio, hora_fim } = req.body ?? {};
@@ -13,6 +14,17 @@ export async function criarAula(req: Request, res: Response) {
   if (!turma_id || !data_aula || !hora_inicio || !hora_fim) {
     res.status(400).json({
       message: "Campos obrigatórios: turma_id, data_aula, hora_inicio, hora_fim",
+    });
+    return;
+  }
+  const dataAulaIso = converterDataBrParaIso(data_aula);
+  if (!dataAulaIso) {
+    res.status(400).json({ message: "data_aula inválida. Use o formato DD/MM/AAAA" });
+    return;
+  }
+  if (!isHoraValida(hora_inicio) || !isHoraValida(hora_fim) || hora_inicio >= hora_fim) {
+    res.status(400).json({
+      message: "hora_inicio/hora_fim inválidos. Use o formato HH:MM, com hora_inicio < hora_fim",
     });
     return;
   }
@@ -29,7 +41,7 @@ export async function criarAula(req: Request, res: Response) {
 
   const id = await createAula({
     turma_id: Number(turma_id),
-    data_aula,
+    data_aula: dataAulaIso,
     hora_inicio,
     hora_fim,
   });
@@ -52,10 +64,27 @@ export async function listarAulas(req: Request, res: Response) {
     return;
   }
 
-  const aulas = await listAulasByTurma(turmaId, {
-    dataInicio: typeof data_inicio === "string" ? data_inicio : undefined,
-    dataFim: typeof data_fim === "string" ? data_fim : undefined,
-  });
+  let dataInicioIso: string | undefined;
+  if (typeof data_inicio === "string") {
+    const convertido = converterDataBrParaIso(data_inicio);
+    if (!convertido) {
+      res.status(400).json({ message: "data_inicio inválida. Use o formato DD/MM/AAAA" });
+      return;
+    }
+    dataInicioIso = convertido;
+  }
+
+  let dataFimIso: string | undefined;
+  if (typeof data_fim === "string") {
+    const convertido = converterDataBrParaIso(data_fim);
+    if (!convertido) {
+      res.status(400).json({ message: "data_fim inválida. Use o formato DD/MM/AAAA" });
+      return;
+    }
+    dataFimIso = convertido;
+  }
+
+  const aulas = await listAulasByTurma(turmaId, { dataInicio: dataInicioIso, dataFim: dataFimIso });
   res.json({ aulas });
 }
 

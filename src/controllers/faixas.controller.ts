@@ -14,6 +14,10 @@ export async function criarFaixa(req: Request, res: Response) {
     res.status(400).json({ message: "Campos obrigatórios: cor, gub, ordem" });
     return;
   }
+  if ((cor as string).length > 50) {
+    res.status(400).json({ message: "cor excede o tamanho máximo de 50 caracteres" });
+    return;
+  }
 
   const conflito = await findFaixaAtivaPorOrdem(Number(ordem));
   if (conflito) {
@@ -47,6 +51,11 @@ export async function atualizarFaixa(req: Request, res: Response) {
   const { cor, gub, ordem, ativo } = req.body ?? {};
   if (cor === undefined && gub === undefined && ordem === undefined && ativo === undefined) {
     res.status(400).json({ message: "Informe ao menos um campo: cor, gub, ordem, ativo" });
+    return;
+  }
+
+  if (cor !== undefined && (cor as string).length > 50) {
+    res.status(400).json({ message: "cor excede o tamanho máximo de 50 caracteres" });
     return;
   }
 

@@ -19,6 +19,7 @@ import {
   listTimelineByAluno,
   type ObservacaoTipo,
 } from "../models/observacoesAluno.model.js";
+import { converterDataBrParaIso } from "../utils/validacao.js";
 
 const tipos_observacao_validos: ObservacaoTipo[] = ["TECNICA", "COMPORTAMENTO", "GERAL"];
 
@@ -67,6 +68,18 @@ export async function atualizarAluno(req: Request, res: Response) {
     res.status(400).json({
       message: "Informe ao menos um campo para atualizar: nome_completo, telefone, endereco",
     });
+    return;
+  }
+  if (nome_completo !== undefined && (nome_completo as string).length > 150) {
+    res.status(400).json({ message: "nome_completo excede o tamanho máximo de 150 caracteres" });
+    return;
+  }
+  if (telefone !== undefined && (telefone as string).length > 20) {
+    res.status(400).json({ message: "telefone excede o tamanho máximo de 20 caracteres" });
+    return;
+  }
+  if (endereco !== undefined && (endereco as string).length > 255) {
+    res.status(400).json({ message: "endereco excede o tamanho máximo de 255 caracteres" });
     return;
   }
 
@@ -151,6 +164,11 @@ export async function registrarGraduacaoAluno(req: Request, res: Response) {
     res.status(400).json({ message: "Campos obrigatórios: faixa_id, data_graduacao" });
     return;
   }
+  const dataGraduacaoIso = converterDataBrParaIso(data_graduacao);
+  if (!dataGraduacaoIso) {
+    res.status(400).json({ message: "data_graduacao inválida. Use o formato DD/MM/AAAA" });
+    return;
+  }
 
   const aluno = await findAlunoById(id);
   if (!aluno) {
@@ -176,7 +194,7 @@ export async function registrarGraduacaoAluno(req: Request, res: Response) {
   await registrarGraduacao({
     aluno_id: id,
     faixa_id: Number(faixa_id),
-    data_graduacao,
+    data_graduacao: dataGraduacaoIso,
     observacao: observacao ?? null,
     registrado_por: req.user!.id,
   });

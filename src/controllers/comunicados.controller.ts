@@ -23,6 +23,10 @@ export async function criarComunicado(req: Request, res: Response) {
     res.status(400).json({ message: `tipo inválido. Use um de: ${tipos_validos.join(", ")}` });
     return;
   }
+  if ((titulo as string).length > 150) {
+    res.status(400).json({ message: "titulo excede o tamanho máximo de 150 caracteres" });
+    return;
+  }
 
   const id = await createComunicado({
     professor_id: req.user!.id,
@@ -77,6 +81,10 @@ export async function atualizarComunicado(req: Request, res: Response) {
   }
   if (tipo !== undefined && !tipos_validos.includes(tipo)) {
     res.status(400).json({ message: `tipo inválido. Use um de: ${tipos_validos.join(", ")}` });
+    return;
+  }
+  if (titulo !== undefined && (titulo as string).length > 150) {
+    res.status(400).json({ message: "titulo excede o tamanho máximo de 150 caracteres" });
     return;
   }
 

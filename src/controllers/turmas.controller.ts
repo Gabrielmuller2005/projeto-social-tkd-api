@@ -8,6 +8,7 @@ import {
   replaceHorarios,
 } from "../models/turmas.model.js";
 import { calcularRankingTurma } from "../models/presencas.model.js";
+import { isHoraValida } from "../utils/validacao.js";
 
 interface HorarioInput {
   dia_semana: number;
@@ -20,8 +21,11 @@ function isHorarioValido(h: unknown): h is HorarioInput {
   const obj = h as Record<string, unknown>;
   return (
     typeof obj.dia_semana === "number" &&
-    typeof obj.hora_inicio === "string" &&
-    typeof obj.hora_fim === "string"
+    obj.dia_semana >= 0 &&
+    obj.dia_semana <= 6 &&
+    isHoraValida(obj.hora_inicio) &&
+    isHoraValida(obj.hora_fim) &&
+    obj.hora_inicio < obj.hora_fim
   );
 }
 
@@ -34,6 +38,10 @@ export async function criarTurma(req: Request, res: Response) {
 
   if (!nome) {
     res.status(400).json({ message: "Campo obrigatório: nome" });
+    return;
+  }
+  if ((nome as string).length > 100) {
+    res.status(400).json({ message: "nome excede o tamanho máximo de 100 caracteres" });
     return;
   }
 
@@ -99,6 +107,11 @@ export async function atualizarTurma(req: Request, res: Response) {
     res.status(400).json({
       message: "Informe ao menos um campo: nome, descricao, ativo, horarios",
     });
+    return;
+  }
+
+  if (nome !== undefined && (nome as string).length > 100) {
+    res.status(400).json({ message: "nome excede o tamanho máximo de 100 caracteres" });
     return;
   }
 

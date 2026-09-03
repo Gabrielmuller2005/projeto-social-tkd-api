@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { calcularIdade } from "../utils/age.js";
+import { converterDataBrParaIso } from "../utils/validacao.js";
 import { hashPassword, comparePassword } from "../utils/password.js";
 import { signToken } from "../utils/jwt.js";
 import {
@@ -24,6 +25,24 @@ async function criarUsuarioComPerfil(perfil: Perfil, body: Record<string, unknow
     return null;
   }
 
+  const dataNascimentoIso = converterDataBrParaIso(data_nascimento);
+  if (!dataNascimentoIso) {
+    res.status(400).json({ message: "data_nascimento inválida. Use o formato DD/MM/AAAA" });
+    return null;
+  }
+  if ((nome_completo as string).length > 150) {
+    res.status(400).json({ message: "nome_completo excede o tamanho máximo de 150 caracteres" });
+    return null;
+  }
+  if ((telefone as string).length > 20) {
+    res.status(400).json({ message: "telefone excede o tamanho máximo de 20 caracteres" });
+    return null;
+  }
+  if ((endereco as string).length > 255) {
+    res.status(400).json({ message: "endereco excede o tamanho máximo de 255 caracteres" });
+    return null;
+  }
+
   const existente = await findUsuarioByTelefone(telefone as string);
   if (existente) {
     res.status(409).json({ message: "Telefone já cadastrado" });
@@ -35,7 +54,7 @@ async function criarUsuarioComPerfil(perfil: Perfil, body: Record<string, unknow
     nome_completo: nome_completo as string,
     telefone: telefone as string,
     senha_hash,
-    data_nascimento: data_nascimento as string,
+    data_nascimento: dataNascimentoIso,
     endereco: endereco as string,
     perfil,
   });
@@ -63,8 +82,17 @@ export async function registerAluno(req: Request, res: Response) {
     res.status(400).json({ message: "Campos obrigatórios: nome_completo, data_nascimento" });
     return;
   }
+  const dataNascimentoIso = converterDataBrParaIso(data_nascimento);
+  if (!dataNascimentoIso) {
+    res.status(400).json({ message: "data_nascimento inválida. Use o formato DD/MM/AAAA" });
+    return;
+  }
+  if ((nome_completo as string).length > 150) {
+    res.status(400).json({ message: "nome_completo excede o tamanho máximo de 150 caracteres" });
+    return;
+  }
 
-  const idade = calcularIdade(data_nascimento as string);
+  const idade = calcularIdade(dataNascimentoIso);
 
   if (idade < idade_maioridade) {
     if (!req.user || req.user.perfil !== "RESPONSAVEL") {
@@ -91,7 +119,7 @@ export async function registerAluno(req: Request, res: Response) {
     const alunoId = await createAluno({
       usuario_id: null,
       nome_completo: nome_completo as string,
-      data_nascimento: data_nascimento as string,
+      data_nascimento: dataNascimentoIso,
       telefone: telefoneAluno,
       endereco: enderecoAluno,
     });
@@ -107,7 +135,7 @@ export async function registerAluno(req: Request, res: Response) {
       aluno: {
         id: alunoId,
         nome_completo,
-        data_nascimento,
+        data_nascimento: dataNascimentoIso,
         telefone: telefoneAluno,
         endereco: enderecoAluno,
       },
@@ -123,6 +151,14 @@ export async function registerAluno(req: Request, res: Response) {
     });
     return;
   }
+  if ((telefone as string).length > 20) {
+    res.status(400).json({ message: "telefone excede o tamanho máximo de 20 caracteres" });
+    return;
+  }
+  if ((endereco as string).length > 255) {
+    res.status(400).json({ message: "endereco excede o tamanho máximo de 255 caracteres" });
+    return;
+  }
 
   const existente = await findUsuarioByTelefone(telefone as string);
   if (existente) {
@@ -135,7 +171,7 @@ export async function registerAluno(req: Request, res: Response) {
     nome_completo: nome_completo as string,
     telefone: telefone as string,
     senha_hash,
-    data_nascimento: data_nascimento as string,
+    data_nascimento: dataNascimentoIso,
     endereco: endereco as string,
     perfil: "ALUNO",
   });
@@ -143,7 +179,7 @@ export async function registerAluno(req: Request, res: Response) {
   await createAluno({
     usuario_id: usuarioId,
     nome_completo: nome_completo as string,
-    data_nascimento: data_nascimento as string,
+    data_nascimento: dataNascimentoIso,
     telefone: telefone as string,
     endereco: endereco as string,
   });

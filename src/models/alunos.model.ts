@@ -62,6 +62,8 @@ export async function updateAlunoCadastro(
     valores.push(data.endereco);
   }
 
+  if (campos.length === 0) return;
+
   valores.push(id);
   await pool.query(
     `update alunos a

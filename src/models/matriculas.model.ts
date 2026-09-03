@@ -30,6 +30,21 @@ export async function createMatricula(data: {
   return result.insertId;
 }
 
+export async function findMatriculaByAlunoETurma(
+  alunoId: number,
+  turmaId: number
+): Promise<Matricula | null> {
+  const [rows] = await pool.query<Matricula[]>(
+    `select *
+       from matriculas m
+      where m.aluno_id = ?
+        and m.turma_id = ?
+      limit 1`,
+    [alunoId, turmaId]
+  );
+  return rows[0] ?? null;
+}
+
 export async function findMatriculaById(id: number): Promise<Matricula | null> {
   const [rows] = await pool.query<Matricula[]>(
     `select * 
@@ -53,11 +68,13 @@ export async function listMatriculasByAlunoId(alunoId: number): Promise<Matricul
 
 export async function listMatriculasAtivasByTurmaId(turmaId: number): Promise<MatriculaComAluno[]> {
   const [rows] = await pool.query<MatriculaComAluno[]>(
-    `select m.*, 
+    `select m.*,
             a.nome_completo as aluno_nome
        from matriculas m
        join alunos a on a.id = m.aluno_id
-      where m.turma_id = ? and m.ativa = true
+      where m.turma_id = ?
+        and m.ativa = true
+        and a.ativo = true
       order by a.nome_completo`,
     [turmaId]
   );
