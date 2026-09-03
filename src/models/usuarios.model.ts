@@ -17,14 +17,21 @@ export type UsuarioSemSenha = Omit<Usuario, "senha_hash">;
 
 export async function findUsuarioByTelefone(telefone: string): Promise<Usuario | null> {
   const [rows] = await pool.query<Usuario[]>(
-    "select * from usuarios where telefone = ? limit 1",
+    `select *
+       from usuarios u
+      where u.telefone = ? limit 1`,
     [telefone]
   );
   return rows[0] ?? null;
 }
 
 export async function findUsuarioById(id: number): Promise<Usuario | null> {
-  const [rows] = await pool.query<Usuario[]>("select * from usuarios where id = ? limit 1", [id]);
+  const [rows] = await pool.query<Usuario[]>(
+    `select *
+       from usuarios u
+      where u.id = ? limit 1`,
+    [id]
+  );
   return rows[0] ?? null;
 }
 
@@ -37,8 +44,14 @@ export async function createUsuario(data: {
   perfil: Perfil;
 }): Promise<number> {
   const [result] = await pool.query<ResultSetHeader>(
-    `insert into usuarios (nome_completo, telefone, senha_hash, data_nascimento, endereco, perfil, ativo)
-     values (?, ?, ?, ?, ?, ?, true)`,
+    `insert into usuarios (nome_completo,
+                           telefone,
+                           senha_hash,
+                           data_nascimento,
+                           endereco,
+                           perfil,
+                           ativo)
+                   values (?, ?, ?, ?, ?, ?, true)`,
     [data.nome_completo, data.telefone, data.senha_hash, data.data_nascimento, data.endereco, data.perfil]
   );
   return result.insertId;
