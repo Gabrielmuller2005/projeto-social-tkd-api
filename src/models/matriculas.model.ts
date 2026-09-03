@@ -64,6 +64,25 @@ export async function listMatriculasAtivasByTurmaId(turmaId: number): Promise<Ma
   return rows;
 }
 
+export async function isAlunoMatriculadoAtivoNaTurma(
+  alunoId: number,
+  turmaId: number
+): Promise<boolean> {
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `select 1
+       from matriculas m
+       join alunos a
+         on a.id = m.aluno_id
+      where m.aluno_id = ?
+        and m.turma_id = ?
+        and m.ativa = true
+        and a.ativo = true
+      limit 1`,
+    [alunoId, turmaId]
+  );
+  return rows.length > 0;
+}
+
 export async function encerrarMatricula(id: number, dataFim: string): Promise<void> {
   await pool.query(`update matriculas m
                       set m.ativa = false, 

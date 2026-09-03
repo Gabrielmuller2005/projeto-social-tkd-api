@@ -7,6 +7,7 @@ import {
   updateTurma,
   replaceHorarios,
 } from "../models/turmas.model.js";
+import { calcularRankingTurma } from "../models/presencas.model.js";
 
 interface HorarioInput {
   dia_semana: number;
@@ -118,4 +119,35 @@ export async function atualizarTurma(req: Request, res: Response) {
 
   const turma = await findTurmaComHorariosById(id);
   res.json({ turma });
+}
+
+export async function rankingTurma(req: Request, res: Response) {
+  const id = Number(req.params.id);
+  if (Number.isNaN(id)) {
+    res.status(400).json({ message: "id inválido" });
+    return;
+  }
+
+  const turma = await findTurmaById(id);
+  if (!turma) {
+    res.status(404).json({ message: "Turma não encontrada" });
+    return;
+  }
+
+  const linhas = await calcularRankingTurma(id);
+  const ranking = linhas
+    .map((linha) => {
+      const totalAulas = Number(linha.total_aulas);
+      const presencas = Number(linha.presencas);
+      return {
+        aluno_id: linha.aluno_id,
+        aluno_nome: linha.aluno_nome,
+        total_aulas: totalAulas,
+        presencas,
+        percentual: totalAulas > 0 ? Number(((presencas / totalAulas) * 100).toFixed(2)) : 0,
+      };
+    })
+    .sort((a, b) => b.percentual - a.percentual);
+
+  res.json({ ranking });
 }

@@ -8,6 +8,7 @@ import {
   listarTurmas,
   buscarTurma,
   atualizarTurma,
+  rankingTurma,
 } from "../controllers/turmas.controller.js";
 
 export const turmasRouter = Router();
@@ -23,4 +24,11 @@ turmasRouter.patch(
   verifyToken,
   checkRole(perfil_admin_professor),
   asyncHandler(atualizarTurma)
+);
+
+turmasRouter.get(
+  "/:id/ranking",
+  verifyToken,
+  checkRole(perfil_admin_professor),
+  asyncHandler(rankingTurma)
 );

@@ -8,6 +8,7 @@ import {
   buscarAluno,
   atualizarAluno,
   atualizarStatusAluno,
+  buscarFrequenciaAluno,
 } from "../controllers/alunos.controller.js";
 
 export const alunosRouter = Router();
@@ -29,3 +30,5 @@ alunosRouter.patch(
   checkRole(perfil_admin_professor),
   asyncHandler(atualizarStatusAluno)
 );
+
+alunosRouter.get("/:id/frequencia", verifyToken, asyncHandler(buscarFrequenciaAluno));
