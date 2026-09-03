@@ -13,6 +13,14 @@ import {
   listHistoricoByAluno,
   findDataGraduacaoFaixaAtual,
 } from "../models/historicoFaixas.model.js";
+import {
+  createObservacao,
+  listObservacoesByAluno,
+  listTimelineByAluno,
+  type ObservacaoTipo,
+} from "../models/observacoesAluno.model.js";
+
+const tipos_observacao_validos: ObservacaoTipo[] = ["TECNICA", "COMPORTAMENTO", "GERAL"];
 
 export async function listarAlunos(req: Request, res: Response) {
   const { ativo } = req.query;
@@ -250,4 +258,87 @@ export async function buscarAulasFaixaAtual(req: Request, res: Response) {
       percentual,
     },
   });
+}
+
+export async function registrarObservacaoAluno(req: Request, res: Response) {
+  const id = Number(req.params.id);
+  if (Number.isNaN(id)) {
+    res.status(400).json({ message: "id inválido" });
+    return;
+  }
+
+  const { tipo, observacao } = req.body ?? {};
+  if (!tipo || !observacao) {
+    res.status(400).json({ message: "Campos obrigatórios: tipo, observacao" });
+    return;
+  }
+  if (!tipos_observacao_validos.includes(tipo)) {
+    res.status(400).json({
+      message: `tipo inválido. Use um de: ${tipos_observacao_validos.join(", ")}`,
+    });
+    return;
+  }
+
+  const aluno = await findAlunoById(id);
+  if (!aluno) {
+    res.status(404).json({ message: "Aluno não encontrado" });
+    return;
+  }
+
+  const observacaoId = await createObservacao({
+    aluno_id: id,
+    professor_id: req.user!.id,
+    tipo,
+    observacao,
+  });
+
+  const observacoes = await listObservacoesByAluno(id);
+  const criada = observacoes.find((o) => o.id === observacaoId);
+  res.status(201).json({ observacao: criada });
+}
+
+export async function listarObservacoesAluno(req: Request, res: Response) {
+  const id = Number(req.params.id);
+  if (Number.isNaN(id)) {
+    res.status(400).json({ message: "id inválido" });
+    return;
+  }
+
+  const podeAcessar = await podeAcessarAluno(req.user!, id);
+  if (!podeAcessar) {
+    res.status(403).json({ message: "Acesso negado a este aluno" });
+    return;
+  }
+
+  const aluno = await findAlunoById(id);
+  if (!aluno) {
+    res.status(404).json({ message: "Aluno não encontrado" });
+    return;
+  }
+
+  const observacoes = await listObservacoesByAluno(id);
+  res.json({ observacoes });
+}
+
+export async function buscarTimelineAluno(req: Request, res: Response) {
+  const id = Number(req.params.id);
+  if (Number.isNaN(id)) {
+    res.status(400).json({ message: "id inválido" });
+    return;
+  }
+
+  const podeAcessar = await podeAcessarAluno(req.user!, id);
+  if (!podeAcessar) {
+    res.status(403).json({ message: "Acesso negado a este aluno" });
+    return;
+  }
+
+  const aluno = await findAlunoById(id);
+  if (!aluno) {
+    res.status(404).json({ message: "Aluno não encontrado" });
+    return;
+  }
+
+  const timeline = await listTimelineByAluno(id);
+  res.json({ timeline });
 }

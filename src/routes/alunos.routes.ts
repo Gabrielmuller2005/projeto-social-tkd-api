@@ -12,6 +12,9 @@ import {
   registrarGraduacaoAluno,
   listarHistoricoFaixas,
   buscarAulasFaixaAtual,
+  registrarObservacaoAluno,
+  listarObservacoesAluno,
+  buscarTimelineAluno,
 } from "../controllers/alunos.controller.js";
 
 export const alunosRouter = Router();
@@ -46,3 +49,14 @@ alunosRouter.post(
 alunosRouter.get("/:id/historico-faixas", verifyToken, asyncHandler(listarHistoricoFaixas));
 
 alunosRouter.get("/:id/faixa-atual/aulas", verifyToken, asyncHandler(buscarAulasFaixaAtual));
+
+alunosRouter.post(
+  "/:id/observacoes",
+  verifyToken,
+  checkRole(perfil_admin_professor),
+  asyncHandler(registrarObservacaoAluno)
+);
+
+alunosRouter.get("/:id/observacoes", verifyToken, asyncHandler(listarObservacoesAluno));
+
+alunosRouter.get("/:id/timeline", verifyToken, asyncHandler(buscarTimelineAluno));
