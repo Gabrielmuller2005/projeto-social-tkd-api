@@ -69,7 +69,10 @@ export async function listPresencasByAula(aulaId: number): Promise<PresencaComAl
   return rows;
 }
 
-export async function calcularFrequenciaAluno(alunoId: number): Promise<FrequenciaRow> {
+export async function calcularFrequenciaAluno(alunoId: number, desde?: string): Promise<FrequenciaRow> {
+  const filtroDesde = desde !== undefined ? "\n        and au.data_aula >= ?" : "";
+  const valores = desde !== undefined ? [desde, alunoId] : [alunoId];
+
   const [rows] = await pool.query<FrequenciaRow[]>(
     `select count(distinct au.id) as total_aulas,
             count(distinct case when p.presente = true then au.id end) as presencas
@@ -78,12 +81,12 @@ export async function calcularFrequenciaAluno(alunoId: number): Promise<Frequenc
          on au.turma_id  = m.turma_id
         and au.status    = 'REALIZADA'
         and au.data_aula >= m.data_inicio
-        and (m.data_fim is null or au.data_aula <= m.data_fim)
+        and (m.data_fim is null or au.data_aula <= m.data_fim)${filtroDesde}
        left join presencas p
          on p.aula_id  = au.id
         and p.aluno_id = m.aluno_id
       where m.aluno_id = ?`,
-    [alunoId]
+    valores
   );
   return rows[0];
 }

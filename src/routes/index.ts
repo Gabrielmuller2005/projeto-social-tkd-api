@@ -5,6 +5,7 @@ import { alunosRouter } from "./alunos.routes.js";
 import { turmasRouter } from "./turmas.routes.js";
 import { matriculasRouter } from "./matriculas.routes.js";
 import { aulasRouter } from "./aulas.routes.js";
+import { faixasRouter } from "./faixas.routes.js";
 
 export const router = Router();
 
@@ -14,3 +15,4 @@ router.use("/alunos", alunosRouter);
 router.use("/turmas", turmasRouter);
 router.use("/matriculas", matriculasRouter);
 router.use("/aulas", aulasRouter);
+router.use("/faixas", faixasRouter);
