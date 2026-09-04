@@ -13,6 +13,25 @@ export async function isResponsavelDoAluno(responsavelId: number, alunoId: numbe
   return rows.length > 0;
 }
 
+export async function findAlunoDuplicadoDoResponsavel(
+  responsavelId: number,
+  nomeCompleto: string,
+  dataNascimento: string
+): Promise<boolean> {
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `select 1
+       from alunos a
+       join responsaveis_alunos ra
+         on ra.aluno_id = a.id
+      where ra.responsavel_id  = ?
+        and a.nome_completo    = ?
+        and a.data_nascimento  = ?
+      limit 1`,
+    [responsavelId, nomeCompleto, dataNascimento]
+  );
+  return rows.length > 0;
+}
+
 export async function linkResponsavelAluno(data: {
   responsavel_id: number;
   aluno_id: number;

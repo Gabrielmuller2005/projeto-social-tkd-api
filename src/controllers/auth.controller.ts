@@ -10,7 +10,10 @@ import {
   toPublicUsuario,
 } from "../models/usuarios.model.js";
 import { createAluno } from "../models/alunos.model.js";
-import { linkResponsavelAluno } from "../models/responsaveisAlunos.model.js";
+import {
+  linkResponsavelAluno,
+  findAlunoDuplicadoDoResponsavel,
+} from "../models/responsaveisAlunos.model.js";
 import { perfil_admin_professor, type Perfil } from "../types/auth.js";
 
 const idade_maioridade = 18;
@@ -110,6 +113,18 @@ export async function registerAluno(req: Request, res: Response) {
     const responsavel = await findUsuarioById(req.user.id);
     if (!responsavel) {
       res.status(401).json({ message: "Responsável não encontrado" });
+      return;
+    }
+
+    const duplicado = await findAlunoDuplicadoDoResponsavel(
+      req.user.id,
+      nome_completo as string,
+      dataNascimentoIso
+    );
+    if (duplicado) {
+      res.status(409).json({
+        message: "Já existe um aluno com esse nome e data de nascimento vinculado a você",
+      });
       return;
     }
 
